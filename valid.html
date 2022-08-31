@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<title>Petrol Price Validation</title>
+	<!-- <link rel='stylesheet' type='text/css' href='css/style.css' /> -->
+	<style>
+		/* body{background-color: #335599;} */
+		/* input[type="button"]{width: 100%; height: 80px; cursor: pointer} */
+		textarea {
+			width: 99%;
+			height: 50px;
+			resize: none;
+			font-size: 20px;
+			color: blue
+		}
+
+		#myT,
+		textarea {
+			margin-right: 20px;
+			margin-left: 20px;
+			width: 90%;
+			
+		}
+
+		.nos,
+		button {
+			width: 90%;
+			border: 1px;
+			font-size: 48px;
+			text-align: center;
+			background-color: #335599;
+			color: rgb(18, 30, 197);
+			cursor: pointer
+		}
+
+		.txd {
+			width: 100%;
+			font-size: 24px;
+			color: rgb(18, 30, 197);
+			cursor: pointer;
+		}
+
+		h1 {
+			color: rgb(18, 30, 197);
+		}
+
+		h2 {
+			font-size: 20px;
+		}
+
+		#n1,
+		#n2,
+		#n3 {
+			width: 33%;
+		}
+
+		body {
+			background-color: #cbc;
+		}
+
+		.foot {
+			text-align: right;
+			margin-right: 20px;
+		}
+
+		.cent {
+			margin-right: 20px;
+			margin-left: 20px;
+		}
+	</style>
+    <script type="text/javascript" src="js/sockets.js"></script> 
+	<script> let Socket, regCode = "database";
+		let starter = 0;
+		// const WStype_ERROR 				= "0"
+    	// const WStype_DISCONNECTED 		= "1"
+    	// const WStype_CONNECTED			= "2"
+    	// const WStype_TEXT				= "3"
+    	// const WStype_BIN				= "4"
+    	// const WStype_FRAGMENT_TEXT_START= "5"
+    	// const WStype_FRAGMENT_BIN_START	= "6"
+    	// const WStype_FRAGMENT 			= "7"
+    	// const WStype_FRAGMENT_FIN		= "8"
+    	// const WStype_PING				= "9"
+    	// const WStype_PONG				= "10"
+		// function print(str){
+		// 	console.log("%c"+str, "background:#a49");
+		// }
+		// function decodeType(type){	
+		// 	let typ = parseInt(type);
+		// 	switch (typ){
+		// 		case 0: console.log("%ctype","WStype_ERROR", "#49a"); break;
+		// 		case 1: print("WStype_DISCONNECTED"); break;
+		// 		case 2: print("WStype_CONNECTED"); break;
+		// 		case 3: print("WStype_TEXT"); break;
+		// 		case 4: print("WStype_BIN"); break;
+		// 		case 5: print("WStype_FRAGMENT_TEXT_START"); break;
+		// 		case 6: print("WStype_FRAGMENT_BIN_START"); break;
+		// 		case 7: print("WStype_FRAGMENT"); break;
+		// 		case 8: print("WStype_FRAGMENT_FIN"); break;
+		// 		case 9: print("type","WStype_PING"); break;
+		// 		case 10: print("WStype_PONG"); break;
+		// 		default: print("Unknown"); console.log("type");
+		// 	}		
+		// }
+		function sendFilename(filepath) {
+			var uri = "edit:file=";
+			uri += filepath;
+			Socket.send(uri);
+		}
+
+		function checkRegActivation() {  ///data/testReg.txt
+			var max = 1000, i = 0, index = max, chunk, temp;
+			var dat = "wsRequest:validation-checkRegActivation()";
+			dat += document.getElementById("txConsole").value;
+			console.log("dat:", dat)
+			Socket.send(dat);
+			console.log("validation-checkRegActivation()", dat)
+		}
+
+		function CreateRegCode(){
+			var max = 1000, i = 0, index = max, chunk, temp;
+			var dat = "wsRequest:validation-CreateRegCode()" + regCode;
+			Socket.send(dat);
+			console.log("generate code", dat)
+		}
+		window.onerror = function (message, url, line, col, error) {
+			alert(`${message}\n At ${line}:${col} of ${url}`);
+			var url = window.location.href;
+			url = url.substring(0, url.indexOf("/edit"));
+			url += "/fedit";
+			console.log(`${message}\n At ${line}:${col} of ${url}`);
+			var win = window.open(url, '_blank');
+		};
+		function start() {
+			// document.getElementById("demo").addEventListener("error", errorHandler);
+			// Socket = new WebSocket('ws://' + window.location.hostname + ':81/');
+			// Socket = new WebSocket('ws://192.168.22.1:81/');
+			Socket = new WebSocket(getUrl());
+			document.getElementById("txConsole").value="";
+			Socket.onmessage = function (evt) {
+				var datas = evt.data;
+				// console.log("event", evt);
+				// console.log("dataIn", datas);
+				let typ = datas.substring(datas.indexOf("fb:")+3);
+				datas = datas.substring(0, datas.indexOf("fb"));
+				decodeType(typ)
+				if (typ === WStype_CONNECTED) console.log("You are connected")
+				else if (typ === WStype_PONG) {
+					setTimeout(function (){// Something you want delayed.
+						var uri = regCode;
+						sendFilename(uri);	
+						console.log("sending: ", uri);					
+					}, 1000); //.
+				}
+				else if (typ === WStype_TEXT) {
+					console.log(datas);	
+					if (datas.indexOf("VALIDATED") > -1) {		//game over, page closed forever.
+						console.log("Validated-");  
+						let new_url = ""
+						new_url += window.location;
+						new_url = new_url.substring(0, new_url.lastIndexOf("/"));
+								console.log("window.url", new_url) 
+						new_url = new_url.substring(0, new_url.lastIndexOf("/"));
+								console.log("window.url", new_url) 
+						window.location.href = new_url
+					}
+					else if (datas.indexOf("Invalid") > -1)  {
+						console.log("Invalid"); 				//page goes back
+						setTimeout(function (){// Something you want delayed.
+						var uri = regCode;
+							sendFilename(uri);	
+							console.log("sending: ", uri);					
+						}, 10000); //.
+					}
+					else document.getElementById("rxConsole").value = datas;	
+				}
+				else {
+					console.log("(((((-)))))", datas);	
+				}
+
+				// starter = evt.timeStamp;
+				// Socket.onopen = function (evt) {
+				// 	console.log(datas, starter);
+				// 	sendFilename(regCode);
+				// }
+				// document.getElementById("rxConsole").value = "You are connected";
+				// if (datas.indexOf("[REG_CODE:") > -1){
+				// 	datas = datas.substring(datas.indexOf(":"))
+				// 	datas = datas.substring(1, datas.indexOf("],"))
+				// 	document.getElementById("rxConsole").value = datas;
+				// }
+			}
+		}
+		let sendPrice = () => {
+			let val, text = document.getElementById("rxConsole").value;
+			if (isNaN(text)) {
+				alert("Hapa tunahitaji namba pekee")
+				clearPage()
+			}
+			alert("clik")
+		}
+	</script>
+
+<body onload="javascript:start();">
+	<h1>
+		<center>How to activate</center>
+	</h1>
+	<form class="rxd" name="myForm" class='cent' method='POST'>
+		<div class='cent'>
+			<h2>If you are seeing this page, it means the software you are using
+				is not activated. Of course the display is working except for 
+				occasional numbers you didn't input being displayed. </p>
+				
+				<p>A small fee is required to remove it and support the designer. 
+					Please contact us for activation code. You only need to activate once and use it for its entire lifetime</p>
+			<textarea id="rxConsole" readonly type="text" name="price"
+				placeholder="Registration code appears here"></textarea>
+			<!-- <h1><center>Type or Paste activation code here</center></h1> -->
+			<textarea id="txConsole" type="text" name="price" placeholder="Enter activation code here"></textarea>
+			<table id="myT">
+				<tr>
+					<td><input class="txd" type="button" onclick="CreateRegCode();" value="Generate New Code"></td>
+					<td><input class="txd" type="button" onclick="checkRegActivation();" value="Apply Changes"></td>
+				</tr>
+				<!-- <td id="run"><input class="nos" type="button" onclick="sendPrice();" value="SAVE"></td> -->
+			</table>
+			<div class="btns">
+				</div>
+			</div>
+
+		<div class='foot'>
+			<!-- <input class="txd" type="button" onclick="clearPage();" value="CLEAR PAGE"><br><hr class='cent'><br><br> -->
+			<h2>&copy;2022 Topaz Digital Solutions<br>
+				Phone: +254 708 407 388<br>
+				mail :topazdigitalsolutions.gmail.com</h2>
+		</div>
+	</form>
+	<footer>
+	</footer>
+</body>
+
+</html>
+
+
+
+<!-- // const encrypt = (salt, text) => {
+	// 	const textToChars = (text) => text.split("").map((c) => c.charCodeAt(0));
+	// 	console.log("textToChars",textToChars(text));
+	// 	const byteHex = (n) => ("0" + Number(n).toString(16)).substr(-2);
+	// 	const applySaltToChar = (code) => textToChars(salt).reduce((a, b) => a ^ b, code);
+	// 	return text.split("").map(textToChars).map(applySaltToChar).map(byteHex).join("");
+	// };
+
+	// const decrypt = (salt, encoded) => {
+	// const textToChars = (text) => text.split("").map((c) => c.charCodeAt(0));
+	// const applySaltToChar = (code) => textToChars(salt).reduce((a, b) => a ^ b, code);
+	// return encoded
+	// 	.match(/.{1,2}/g)
+	// 	.map((hex) => parseInt(hex, 16))
+	// 	.map(applySaltToChar)
+	// 	.map((charCode) => String.fromCharCode(charCode))
+	// 	.join("");
+	// }; -->

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Petrol Price Display</title>
+	<style>
+		body {
+			background-color: #359
+		}
+
+		input[type=button] {
+			width: 100%;
+			height: 100px
+		}
+
+		textarea {
+			width: 99%;
+			padding-left: 30px;
+			height: 120px;
+			resize: none;
+			font-size: 100px;
+			color: #00f
+		}
+		/* #myT {
+			margin: 120px;
+		} */
+
+		.nos,
+		button {
+			width: 100%;
+			height: 200px;
+			border: 1px;
+			border-radius: 5%;
+			font-size: 72px;
+			text-align: center;
+			color: #121ec5
+		}
+
+		.txd {
+			font-size: 72px;
+			color: #121ec5
+		}
+
+		h1 {
+			color: #121ec5
+		}
+
+		#n1,
+		#n2,
+		#n3 {
+			width: 33%
+		}
+
+		body {
+			background-color: #ddd
+		}
+
+		.foot {
+			text-align: right;
+			margin-right: 20px
+		}
+
+		/* .cent {
+			margin-right: 20px;
+			margin-left: 20px
+		} */
+		.at50, input{
+			font-size: 36px;
+		}
+        .at50{
+            width: 50%;
+			height: 50px;
+			
+        }
+		.label100{
+			width: 100%;
+			height: 50px;
+		}
+        #title{
+            color: white;
+            font-size: 24px;
+        }
+
+        .tab{
+            border:rgb(228, 22, 22) 2px solid;
+        }
+		#rxd {
+            border: 20px solid red;
+            border-radius: 10%;
+            /* margin: 0 50px;
+            padding: 0 20px; */
+        }
+		#myT {
+			margin-right: 60px;
+			margin-left: 60px;
+			border: 4px solid red;
+			/* border-radius: 1%; */
+			width: 90%
+		}
+		#myT2 {margin-right: 60px;
+			margin-left: 60px;
+			width: 90%;
+			color: white;
+			background-color: rgb(255, 0, 0);
+		}
+	</style>
+    <script type="text/javascript" src="js/sockets.js"></script>
+	<script>
+		let Socket, title, petOld = 33333, dizOld = 22222, kerOld = 11111;
+		function start(){
+			Socket = new WebSocket(getUrl())
+            title = document.getElementById("title")
+			Socket.onmessage = function (evt) {
+                var datas = (evt.data).toLowerCase();
+                let typ = datas.substring(datas.indexOf("fb:") + 3);
+                datas = datas.substring(0, datas.indexOf("fb"));
+                decodeType(typ)
+                console.log("typ", typ)
+                if (typ === WStype_CONNECTED) {
+                    console.log("You are connected") //
+                    document.getElementById("myT").setAttribute("style", "border:4px solid green;");
+                    document.getElementById("myT2").setAttribute("style", "background-color:green;");
+                    // for (let i = 0; i < document.getElementsByClassName("label100").length; i++)
+                    //     document.getElementsByClassName("label100")[i].style.backgroundColor = "green";
+                } else if (typ === WStype_DISCONNECTED) {
+                    console.log("Disconnected..") //
+                    // document.getElementById("rxd").setAttribute("style", "border:4px solid red;");
+                    // for (let i = 0; i < document.getElementsByClassName("label100").length; i++)
+                    //     document.getElementsByClassName("label100")[i].style.backgroundColor = "red";
+                }
+                else if (typ === WStype_PONG) {
+                    title.innerHTML = "Please wait.. reload if it takes longer than 20 seconds"
+                    setTimeout(function () {// Something you want delayed.
+                        var uri = "wsRequest:prices-fetchPrices()";
+                        // var uri = "wsRequest:prices-getprice()";
+                        Socket.send(uri);
+                        console.log("sending: ", uri);
+                    }, 10); //.
+                }
+                else if (typ === WStype_TEXT) {                    
+                    title.innerHTML = "Price Input Console ready.."
+                    console.log(datas);
+                    if (datas.indexOf("petrol") > -1) {
+                        // title.setAttribute("style", "color:green")
+                        title.setAttribute("font-size", "72px")
+                        // datas = datas.substring(0, datas.indexOf("]") + 1);
+                        // datas = datas.replace("[", "")
+                        // datas = datas.replace("]", "")
+						console.log("datas", datas)
+						const prices = JSON.parse(datas);
+						petOld = prices.petrol;
+						dizOld = prices.diesel;
+						kerOld = prices.keros;
+						console.log("petrol", petOld)
+						console.log("diesel", dizOld)
+						console.log("keros", kerOld)
+                        document.getElementById("petrol1").value = petOld/100;
+                        document.getElementById("diesel1").value = dizOld/100;
+                        document.getElementById("keros1").value = kerOld/100;
+						// (kero).setAttribute = ("value", kerOld);
+						// for (pr in myprices){
+						// 	console.log("pr", myprices[pr])
+						// }
+						datas = ""
+                    } else {
+                        alert(datas);
+                    }
+                }
+                else {
+                    console.log("(((((-)))))", datas);
+                }
+            }
+		}
+		function clearPage() {
+			document.getElementById("rxConsole").value = "";
+		}
+		function updateScreen() {
+			let val, text = document.getElementById("rxConsole").value;
+			// document.getElementById("rxConsole").setAttribute("style", "rgb(18, 30, 197)");
+			val = this.event.target.value
+			if (val === "DEL") {
+				let len = text.length
+				if (text.charAt(len - 1) === '.') text = text.substring(0, len - 2)
+				else text = text.substring(0, len - 1)
+				clearPage()
+				document.getElementById("rxConsole").value = text
+			}
+			if (isNaN(val)) {
+				return
+			} else {
+				if (text.length > 0) text += this.event.target.value
+				else text = this.event.target.value
+			}
+			clearPage()
+			if (text.length === 3) text += "."
+			document.getElementById("rxConsole").value = text
+		}
+		function isGood(price){
+			return (price > 10 && price < 1000);
+		}
+		function jsonify(key, val){	
+			let str = "\"" + key + "\":\"";
+			str += val;	
+			str += "\"";	
+			return str;
+		}
+		function formatPrice(price) {
+			return Math.round(price*100);
+		}
+		function sendPrice() {
+			let pet = document.getElementById("petrol1"); 
+			let diz = document.getElementById("diesel1"); 
+			let ker = document.getElementById("keros1"); 
+			let val, text="{\n";
+			val = "wsRequest:prices-saveNewPrices(){\n";
+			val += jsonify("petrol", (isGood(pet.value))? formatPrice(pet.value) : petOld) + ",\n";
+			val += jsonify("diesel", (isGood(diz.value))? formatPrice(diz.value) : dizOld) + ",\n";
+			val += jsonify("keros",  (isGood(ker.value))? formatPrice(ker.value) : kerOld);
+			val += "\n}";
+			console.log("valop", val);
+			Socket.send(val)
+			// console.log("json", JSON.parse(val))
+		}
+		function numOnly(){
+			let id = this.event.target.id;
+			let value = this.event.target.value.replace(/\D+/g, '');
+			// if (this.event.inputType === "deleteContentBackward") {capture backspace here}
+			if (value.length > 2) {
+				let temp = value.substring(3);
+				value = value.substring(0, 3);
+				value += "."
+				value += temp;
+			}
+			document.getElementById(id).value = value
+		}
+	
+	</script>
+
+<!-- <body onload="start()"> -->
+<body onload="start()">
+	<!-- <center><h1 id="title">Price input Console for Wifi Petrol Price display</h1></center> -->
+	<form class="rxd" id="myForm" class="cent" method="POST">	    
+			<table id="myT2" class="label100" >
+				<td><center><h1 id="title">Price input Console</h1></center></td>
+			</table>   
+		<table id="myT">
+			<tr>
+				<td class="at50"><label for="petrol1">Petrol</label></td>
+				<td class="at50"><input id="petrol1" inputmode="numeric" value="56894" oninput="numOnly()"></td>
+			</tr>
+			<tr>
+				<td class="at50"><label for="diesel1">Diesel</label></td>
+				<td class="at50"><input id="diesel1" inputmode="numeric" oninput="numOnly()"></td>
+			</tr>
+			<tr>
+				<td class="at50"><label for="keros1">Kerosene</label></td>
+				<td class="at50"><input id="keros1" inputmode="numeric" oninput="numOnly()"></td>
+			</tr>
+			
+			<tr>
+				<td id="del"><input class="at100" type="button" onclick="updateScreen();" value="CLEAR"/></td>
+				<td id="save"><input class="at100" type="button" onclick="sendPrice();" value="SAVE"/></td>
+			</tr>
+
+			
+		</table>
+		<div class="foot"><br>
+			<hr class="cent"><br><br>
+			<h2>&copy;2022 Topaz Digital Solutions<br>Phone: +254 708 407 388<br>mail :topazdigitalsolutions.gmail.com
+			</h2>
+		</div>
+	</form>
+	<footer></footer>
+</body>
+</head>
+
+</html>

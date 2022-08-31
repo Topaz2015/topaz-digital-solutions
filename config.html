@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Petrol Price Display</title>
+    <style>
+        input[type=submit] {
+            width: 100%;
+            height: 50px;
+        }
+
+        #rxd {
+            border: 4px solid red;
+            border-radius: 1%;
+            margin: 0 50px;
+            padding: 0 20px;
+        }
+
+        .cent,
+        .foot {
+            margin-right: 20px;
+        }
+
+
+        .txd {
+            font-size: 36px;
+        }
+
+        .txd3 {
+            font-size: 16px;
+            float: left;
+        }
+        .txd, .txd3 {
+            color:white;
+            background-color: coral;
+        }
+        body {
+            background-color:cadetblue;
+        }
+
+        .foot {
+            text-align: right;
+        }
+
+        .cent {
+            margin-left: 20px;
+        }
+
+        #myT {
+            margin: 120px;
+        }
+        .at50{
+            width: 50%;
+        }
+        #title{
+            color: red;
+            font-size: 24px;
+        }
+        .at33{
+            width: 33%;
+        }
+        table{
+            width: 100%;
+        }
+        label{
+            width:100%;
+            font-size:42px;
+        }
+        .label100{
+            width: 100%;
+            background-color: red;
+            color:white;
+        }
+        .tab{
+            border:white 2px solid;
+        }
+    </style>
+    <script type="text/javascript" src="js/sockets.js"></script>
+    <script>
+        let Socket, title, debugcnt = 0, debugmode = 0;
+        function start() {
+            Socket = new WebSocket(getUrl());
+            title = document.getElementById("title")
+            Socket.onmessage = function (evt) {
+                var datas = (evt.data).toLowerCase();
+                let typ = datas.substring(datas.indexOf("fb:") + 3);
+                datas = datas.substring(0, datas.indexOf("fb"));
+                decodeType(typ)
+                console.log("typ", typ)
+                if (typ === WStype_CONNECTED) {
+                    console.log("You are connected") //
+                    document.getElementById("rxd").setAttribute("style", "border:4px solid green;");
+                } else if (typ === WStype_DISCONNECTED) {
+                    console.log("Disconnected..") //
+                    document.getElementById("rxd").setAttribute("style", "border:4px solid red;");
+                }
+                else if (typ === WStype_PONG) {
+                    title.innerHTML = "Please wait.. reload if it takes longer than 20 seconds"
+                    document.getElementById("label100").setAttribute("style", "background-color:green;");
+                    document.getElementById("title").setAttribute("style", "color:green;");
+                
+                    setTimeout(function () {// Something you want delayed.
+                        var uri = "wsRequest:fetchConfigs()";
+                        Socket.send(uri);
+                        // console.log(Socket)
+                        console.log("sending: ", uri);
+                    }, 10); //.
+                }
+                else if (typ === WStype_TEXT) {                    
+                    title.innerHTML = "Configuration Settings"
+                    console.log(datas);
+                    if (datas.indexOf("petrol") > -1) 
+                        document.getElementById("petrol").checked = true;
+                    else if (datas.indexOf("diesel") > -1) 
+                        document.getElementById("diesel").checked = true;
+                    else if (datas.indexOf("keros") > -1) 
+                        document.getElementById("keros").checked = true;                    
+                    else {
+                        alert("Please configure display");
+                    }
+                }
+                else {
+                    console.log("(((((-)))))", datas);
+                }
+            }
+        }
+
+        function SendSettings() {
+            let prod, style, freq
+            var uri = "wsRequest:saveConfigs()";
+            document.getElementsByName("product").forEach(ele => (ele.checked === true) ? prod = ele.value : "n")
+            uri += prod;
+            console.log(uri)  
+            Socket.send(uri);
+        }
+        function getDebugMode() {
+            debugcnt++;
+            console.log("debugmode", debugmode);
+            if (debugcnt === 10) {
+                debugmode = 1;
+                // document.getElementById("label100").setAttribute("style", "color:brown")
+                console.log("debuggng mode entered ", debugmode)
+            }
+            setTimeout(
+                function () { debugcnt = 0; }, 5000);
+        }
+    </script>
+</head>
+
+<!-- <body> -->
+    <body onload="start()">
+    
+        <center><h1 id="title" onclick="getDebugMode()">Configuration Settings</h1></center>
+    </h1>
+    <form id="rxd" name="myForm" class="cent" method="GET">        
+        <table id="label100" class="label100" >
+            <td><label>Choose Product to be Displayed</label></td>
+        </table>
+        <table class="tab">
+            <tr>
+                <td class="at50">
+                    <input type="radio" id="petrol" name="product" value="petrol">
+                    <label for="petrol">Petrol </label><br>
+                    <input type="radio" id="diesel" name="product" value="diesel">
+                    <label for="diesel">Diesel</label><br>
+                    <input type="radio" id="keros" name="product" value="keros">
+                    <label for="keros">Kerosene</label><br>                    
+                </td>
+            </tr>
+        </table> 
+        <P>* For boards to communicate with each other and display the correct prices
+            each board must have its own ID </P>
+        <div class="foot"><input class="txd" type="button" onclick="SendSettings();" value="Save Settings"><br>
+         <br>   
+        <div><input id="btn3" class="txd3" type="button" onClick="window.location.href='/'" value="<< Back Home"></div>
+            <br>
+        </div>
+    </form>
+    <div class="foot">
+        <hr class="cent"><br>
+        <h2>&copy;2022 Topaz Digital Solutions<br>Phone: +254 708 407 388<br>mail :topazdigitalsolutions.gmail.com
+        </h2>
+    </div>
+    <footer></footer>
+</body>
+
+</html>

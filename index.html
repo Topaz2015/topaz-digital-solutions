@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Petrol Price Display</title>
+    <style>.txd1,.txd2,.txd3,h1{text-shadow:-1px -1px 0 rgba(255,255,255,.3),1px 1px 0 rgba(0,0,0,.8)}.txd1,.txd2,.txd3{font-size:36px}input[type=button]{width:100%;height:50px;margin:10px;cursor:pointer}.rxd,button{border:2px solid #fff;border-radius:1%;margin:20px 50px;padding:0 30px 0 10px}.cent,.foot{margin-right:20px}h1{text-align:center;font-size:60px;color:#333}.txd1{background-color:#727dc5;color:#127dc5}.txd2{background-color:#942be2;color:#8a2be2;visibility:hidden;}.txd3{background-color:#ff967a;color:#e9967a;visibility:hidden;}body{background-color:#ddd}.foot{text-align:right}
+    </style>
+    <script type="text/javascript" src="js/sockets.js"></script> 
+    <script>
+        let Socket;
+		// const WStype_ERROR 				= "0"
+    	// const WStype_DISCONNECTED 		= "1"
+    	// const WStype_CONNECTED			= "2"
+    	// const WStype_TEXT				= "3"
+    	// const WStype_BIN				= "4"
+    	// const WStype_FRAGMENT_TEXT_START= "5"
+    	// const WStype_FRAGMENT_BIN_START	= "6"
+    	// const WStype_FRAGMENT 			= "7"
+    	// const WStype_FRAGMENT_FIN		= "8"
+    	// const WStype_PING				= "9"
+    	// const WStype_PONG				= "10"
+		// function print(str){
+		// 	console.log("%c"+str, "background:#a49");
+		// }
+		// function decodeType(type){	
+		// 	let typ = parseInt(type);
+		// 	switch (typ){
+		// 		case 0: console.log("%ctype","WStype_ERROR", "#49a"); break;
+		// 		case 1: print("WStype_DISCONNECTED"); break;
+		// 		case 2: print("WStype_CONNECTED"); break;
+		// 		case 3: print("WStype_TEXT"); break;
+		// 		case 4: print("WStype_BIN"); break;
+		// 		case 5: print("WStype_FRAGMENT_TEXT_START"); break;
+		// 		case 6: print("WStype_FRAGMENT_BIN_START"); break;
+		// 		case 7: print("WStype_FRAGMENT"); break;
+		// 		case 8: print("WStype_FRAGMENT_FIN"); break;
+		// 		case 9: print("type","WStype_PING"); break;
+		// 		case 10: print("WStype_PONG"); break;
+		// 		default: print("Unknown"); console.log("type");
+		// 	}		
+		// }
+        // sender = () => {            
+		// 	var dat = "wsRequest:checkEncryption()";
+		// 	dat += document.getElementById("txConsole").value;
+		// 	console.log("dat:", dat)
+		// 	Socket.send(dat);
+		// 	console.log("checkEncryption()", dat)
+        // }
+        // sender = () => {            
+		// 	var dat = "wsRequest:validation-regValStatus()";
+		// 	Socket.send("wsRequest:validation-regValStatus()");
+		// 	console.log("checkEncryption()", dat)
+        // }
+        function start() {
+			Socket = new WebSocket(getUrl());
+			let url, ur = window.location.hostname;
+            if (ur.indexOf("127.0.0.1") > -1) {
+                url = 'ws://192.168.98.224:81/';
+                console.log("running on localhost server");
+            }
+            else url = 'ws://' + window.location.hostname + ':81/';
+            Socket = new WebSocket(url);
+			Socket.onmessage = function (evt) {
+				var datas = (evt.data).toLowerCase();
+				let typ = datas.substring(datas.indexOf("fb:")+3);
+				datas = datas.substring(0, datas.indexOf("fb"));
+                
+				decodeType(typ)
+				if (typ === WStype_CONNECTED) console.log("You are connected")
+				else if (typ === WStype_PONG) {
+					setTimeout(function (){// Something you want delayed.
+						var uri = "wsRequest:validation-regValStatus()";
+			            Socket.send(uri);
+						console.log("sending: ", uri);					
+					}, 100); //.
+				}
+				else if (typ === WStype_TEXT) {
+                    let btn2 = document.getElementById("btn2")
+                    let btn3 = document.getElementById("btn3")
+                    let reg = datas.substring(0, datas.indexOf(";")+1);
+                    let val = datas.replace(reg, "");
+                    if (val.indexOf("No") > -1) btn2.setAttribute("style", "visibility:visible;");  
+                    else btn3.setAttribute("style", "visibility:visible;"); 
+					console.log("reg", reg);	
+					console.log("val",val);	
+					}
+				else {
+					console.log("(((((-)))))", datas);	
+				}
+        }
+    }
+    </script>
+</head>
+
+<body onload="start()"><h1>
+        <center>Configure Display</center>
+    </h1>
+    <div class="rxd">
+        <div><input class="txd1" type="button" onClick="window.location.href='/price.html'" value="Change Price"></div>
+        <div><input id="btn2" class="txd2" type="button" onClick="window.location.href='/valid.html'" value="Activate Device"></div>
+        <div><input id="btn3" class="txd3" type="button" onClick="window.location.href='/config.html'" value="Change Settings"></div>
+    </div>
+    <div class="foot">
+        <hr class="cent"><br>
+        <h2>&copy;2022 Topaz Digital Solutions<br>Phone: +254 708 407 388<br>mail :topazdigitalsolutions.gmail.com
+        </h2>
+    </div>
+    <footer></footer>
+</body>
+</html>
